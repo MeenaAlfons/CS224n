@@ -56,19 +56,15 @@ def naiveSoftmaxLossAndGradient(
     ### Please use the provided softmax function (imported earlier in this file)
     ### This numerically stable implementation helps you avoid issues pertaining
     ### to integer overflow. 
-    tmp = outsideVectors.dot(centerWordVec)
-    s = softmax(tmp)
+    s = softmax(outsideVectors.dot(centerWordVec))
 
     loss = -np.log( s[outsideWordIdx] )
 
     gradOutsideVecs = - s
     gradOutsideVecs[outsideWordIdx] += 1
-    gradOutsideVecs = gradOutsideVecs[:, None] * centerWordVec
-    gradOutsideVecs *= -1
+    gradOutsideVecs = gradOutsideVecs[:, None] * (- centerWordVec)
 
-    gradCenterVec = - np.sum( s[:,None] * outsideVectors, axis=0)
-    gradCenterVec += outsideVectors[outsideWordIdx]
-    gradCenterVec *= -1
+    gradCenterVec = np.sum( s[:,None] * outsideVectors, axis=0) - outsideVectors[outsideWordIdx]
 
     ### END YOUR CODE
 
@@ -115,26 +111,23 @@ def negSamplingLossAndGradient(
 
     ### YOUR CODE HERE
     ### Please use your implementation of sigmoid in here.
-    wordVectors = - outsideVectors[indices]
-    wordVectors[0] *= -1
+    outsideMask = -np.ones(outsideVectors.shape[0])
+    outsideMask[outsideWordIdx] = 1
 
-    s = sigmoid(wordVectors.dot(centerWordVec))
+    maskedOutsideVectors = outsideVectors * outsideMask[:, None]
 
-    loss = - np.sum(np.log(s))
+    siguv = sigmoid(maskedOutsideVectors.dot(centerWordVec))
+    siguv_1 = siguv - 1
 
-    gradCenterVec = np.sum(wordVectors * (s-1)[:, None], axis=0)
+    bbins=np.bincount(indices, minlength=outsideVectors.shape[0])
+    
+    loss = - np.sum(np.log(siguv) * bbins)
 
+    gradCenterVec = np.sum((maskedOutsideVectors * siguv_1[:, None]) * bbins[:, None], axis=0)
 
-    tmp2 = - outsideVectors
-    tmp2[outsideWordIdx] *= -1
-    outsideSigmoid = sigmoid(tmp2.dot(centerWordVec))
-    gradOutside = centerWordVec * (1-outsideSigmoid)[:,None]
+    gradOutside = - centerWordVec * siguv_1[:,None]
     gradOutside[outsideWordIdx] *= -1
-    bbins=np.bincount(indices)
-
-    gradOutsideVecs = np.zeros(outsideVectors.shape)
-    for idx, reps in enumerate(bbins):
-        gradOutsideVecs[idx] += np.sum(np.tile(gradOutside[idx], (reps,1)), axis=0)
+    gradOutsideVecs = gradOutside * bbins[:, None]
 
     ### END YOUR CODE
 
