@@ -111,10 +111,8 @@ def negSamplingLossAndGradient(
 
     ### YOUR CODE HERE
     ### Please use your implementation of sigmoid in here.
-    outsideMask = -np.ones(outsideVectors.shape[0])
-    outsideMask[outsideWordIdx] = 1
-
-    maskedOutsideVectors = outsideVectors * outsideMask[:, None]
+    maskedOutsideVectors = - outsideVectors
+    maskedOutsideVectors[outsideWordIdx] *= -1
 
     siguv = sigmoid(maskedOutsideVectors.dot(centerWordVec))
     siguv_1 = siguv - 1
