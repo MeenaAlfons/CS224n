@@ -126,8 +126,8 @@ if __name__ == "__main__":
     # debug = False
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--debug', dest='debug', default=True,
-                        help='--debug True|false')
+    parser.add_argument('--debug', action='store_true')
+    parser.set_defaults(debug=False)
     args = parser.parse_args()
     debug = args.debug
 
